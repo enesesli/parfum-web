@@ -1,0 +1,213 @@
+:root {
+  --zemin: #faf7f2;
+  --kart: #ffffff;
+  --yazi: #2b2522;
+  --soluk: #7a6f68;
+  --vurgu: #8a5a44;
+  --cizgi: #e6ded5;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  color: var(--yazi);
+  background: var(--zemin);
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ust-bar {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--cizgi);
+  background: var(--kart);
+}
+.logo {
+  font-family: Georgia, serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+}
+
+.icerik {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.liste-duzeni {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.filtre-paneli {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
+}
+.filtre-paneli label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--soluk);
+}
+.filtre-paneli input,
+.filtre-paneli select {
+  padding: 0.55rem;
+  border: 1px solid var(--cizgi);
+  border-radius: 6px;
+  background: var(--kart);
+  font: inherit;
+  color: var(--yazi);
+}
+.fiyat-araligi {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+.fiyat-araligi input {
+  width: 100%;
+}
+
+button {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--yazi);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ikincil-buton {
+  background: transparent;
+  color: var(--yazi);
+  border: 1px solid var(--cizgi);
+}
+
+.sonuc-sayisi {
+  color: var(--soluk);
+  margin-top: 0;
+}
+
+.parfum-izgara {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.parfum-karti {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.2rem;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 10px;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.parfum-karti:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+.parfum-karti h3 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-weight: normal;
+}
+.kart-marka {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vurgu);
+}
+.kart-bilgi {
+  font-size: 0.85rem;
+  color: var(--soluk);
+}
+.kart-alt {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.8rem;
+}
+.tukendi {
+  font-size: 0.8rem;
+  color: #b42318;
+}
+
+.sayfalama {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.hata {
+  color: #b42318;
+}
+
+.detay {
+  max-width: 640px;
+}
+.geri-link {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: var(--soluk);
+}
+.detay h1 {
+  font-family: Georgia, serif;
+  font-weight: normal;
+  margin: 0.3rem 0 1rem;
+}
+.detay-aciklama {
+  line-height: 1.6;
+}
+.detay-bilgiler {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 1.5rem 0;
+}
+.detay-bilgiler dt {
+  color: var(--soluk);
+}
+.detay-bilgiler dd {
+  margin: 0;
+}
+.detay-alt {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--cizgi);
+}
+.detay-fiyat {
+  font-size: 1.6rem;
+}
+
+@media (max-width: 720px) {
+  .liste-duzeni {
+    grid-template-columns: 1fr;
+  }
+  .filtre-paneli {
+    position: static;
+  }
+}
