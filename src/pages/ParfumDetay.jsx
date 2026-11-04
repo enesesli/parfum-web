@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { parfumGetir } from "../api";
 import { fiyatYaz } from "../components/ParfumKarti";
+import { useSepet } from "../context/SepetContext";
 
 function ParfumDetay() {
   const { id } = useParams();
+  const { ekle, urunler } = useSepet();
   const [parfum, setParfum] = useState(null);
   const [hata, setHata] = useState("");
 
@@ -31,6 +33,9 @@ function ParfumDetay() {
 
   if (!parfum) return <p>Yükleniyor...</p>;
 
+  const sepettekiAdet = urunler.find((u) => u.id === parfum.id)?.adet ?? 0;
+  const stokDoldu = sepettekiAdet >= parfum.stok;
+
   return (
     <article className="detay">
       <Link to="/" className="geri-link">
@@ -52,8 +57,24 @@ function ParfumDetay() {
 
       <div className="detay-alt">
         <strong className="detay-fiyat">{fiyatYaz(parfum.fiyat)}</strong>
-        <button disabled={parfum.stok === 0}>Sepete ekle</button>
+        <button
+          disabled={parfum.stok === 0 || stokDoldu}
+          onClick={() => ekle(parfum)}
+        >
+          {parfum.stok === 0
+            ? "Tükendi"
+            : stokDoldu
+              ? "Stok sınırına ulaşıldı"
+              : "Sepete ekle"}
+        </button>
       </div>
+
+      {sepettekiAdet > 0 && (
+        <p className="sepet-bilgi">
+          Sepetinde {sepettekiAdet} adet var.{" "}
+          <Link to="/sepet">Sepete git →</Link>
+        </p>
+      )}
     </article>
   );
 }

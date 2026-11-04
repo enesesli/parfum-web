@@ -211,3 +211,100 @@ button:disabled {
     position: static;
   }
 }
+.ust-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sepet-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.rozet {
+  min-width: 1.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: var(--vurgu);
+  color: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.sepet-bilgi {
+  margin-top: 1rem;
+  color: var(--soluk);
+}
+.sepet-bilgi a {
+  color: var(--vurgu);
+}
+
+.sepet {
+  max-width: 800px;
+}
+.sepet h1 {
+  font-family: Georgia, serif;
+  font-weight: normal;
+}
+.sepet-listesi {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+.sepet-satiri {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--cizgi);
+}
+.sepet-urun {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.sepet-urun h3 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-weight: normal;
+}
+.adet-kontrol {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.adet-kontrol button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+.adet-kontrol span {
+  min-width: 1.5rem;
+  text-align: center;
+}
+.satir-tutar {
+  min-width: 6rem;
+  text-align: right;
+}
+
+.sepet-ozet {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.toplam {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .sepet-satiri {
+    grid-template-columns: 1fr auto;
+  }
+  .satir-tutar {
+    text-align: left;
+  }
+}
