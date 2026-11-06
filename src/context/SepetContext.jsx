@@ -39,10 +39,21 @@ export function SepetProvider({ children }) {
           marka: parfum.marka,
           fiyat: parfum.fiyat,
           stok: parfum.stok,
+          renk: parfum.renk,
+          siseTipi: parfum.siseTipi,
+          gorselYolu: parfum.gorselYolu,
           adet: 1,
         },
       ];
     });
+  }
+
+  // Atölyede tasarlanan parfüm: katalogda karşılığı olmadığı için kendi kimliğini alır
+  function ozelEkle(parfum) {
+    setUrunler((onceki) => [
+      ...onceki,
+      { ...parfum, id: `ozel-${Date.now()}`, ozel: true, stok: 5, adet: 1 },
+    ]);
   }
 
   function adetDegistir(id, adet) {
@@ -72,6 +83,7 @@ export function SepetProvider({ children }) {
       value={{
         urunler,
         ekle,
+        ozelEkle,
         adetDegistir,
         cikar,
         temizle,

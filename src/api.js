@@ -29,15 +29,18 @@ async function hataOlustur(cevap) {
   return hata;
 }
 
-async function istek(yol, { method = "GET", govde, token } = {}) {
+async function istek(yol, { method = "GET", govde, token, signal } = {}) {
   const basliklar = {};
-  if (govde !== undefined) basliklar["Content-Type"] = "application/json";
+  const formMu = govde instanceof FormData;
+  if (govde !== undefined && !formMu) basliklar["Content-Type"] = "application/json";
   if (token) basliklar.Authorization = `Bearer ${token}`;
 
   const cevap = await fetch(`${API}${yol}`, {
     method,
     headers: basliklar,
-    body: govde !== undefined ? JSON.stringify(govde) : undefined,
+    // FormData (dosya yükleme) olduğu gibi gönderilir; tarayıcı sınırları kendisi ayarlar
+    body: govde === undefined ? undefined : formMu ? govde : JSON.stringify(govde),
+    signal,
   });
 
   if (!cevap.ok) throw await hataOlustur(cevap);
@@ -63,3 +66,46 @@ export const parfumGuncelle = (id, parfum, token) =>
 
 export const parfumSil = (id, token) =>
   istek(`/api/parfumler/${id}`, { method: "DELETE", token });
+
+// Koku atölyesi
+export const esanslariGetir = () => istek("/api/esanslar");
+
+export const kokuDegerlendir = (secim, signal) =>
+  istek("/api/esanslar/degerlendir", { method: "POST", govde: secim, signal });
+
+// Ürün görselleri
+export const gorselAdresi = (yol) => (yol ? `${API}${yol}` : null);
+
+export function gorselYukle(id, dosya, token) {
+  const form = new FormData();
+  form.append("dosya", dosya);
+  return istek(`/api/parfumler/${id}/gorsel`, { method: "POST", govde: form, token });
+}
+
+export const gorselSil = (id, token) =>
+  istek(`/api/parfumler/${id}/gorsel`, { method: "DELETE", token });
+
+// Siparişler ve ödeme
+export const siparisOlustur = (istek) => istek_("/api/siparisler", "POST", istek);
+
+export const siparisGetir = (siparisNo, eposta) =>
+  istek(`/api/siparisler/${encodeURIComponent(siparisNo)}?eposta=${encodeURIComponent(eposta)}`);
+
+export const kartIleOde = (siparisNo, odeme) =>
+  istek_(`/api/siparisler/${siparisNo}/odeme/kart`, "POST", odeme);
+
+export const kriptoFaturaOlustur = (siparisNo, eposta, para) =>
+  istek_(`/api/siparisler/${siparisNo}/odeme/kripto`, "POST", { eposta, para });
+
+export const kriptoOdemesiniSimuleEt = (siparisNo, eposta) =>
+  istek_(`/api/siparisler/${siparisNo}/odeme/kripto/simule-et`, "POST", { eposta });
+
+// Yönetici
+export const siparisleriGetir = (sorgu, token) => istek(`/api/siparisler?${sorgu}`, { token });
+
+export const siparisDurumGuncelle = (id, durum, token) =>
+  istek(`/api/siparisler/${id}/durum`, { method: "PUT", govde: { durum }, token });
+
+function istek_(yol, method, govde) {
+  return istek(yol, { method, govde });
+}

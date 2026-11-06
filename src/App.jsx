@@ -1,43 +1,32 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import AnaSayfa from "./pages/AnaSayfa";
 import ParfumListesi from "./pages/ParfumListesi";
 import ParfumDetay from "./pages/ParfumDetay";
 import Sepet from "./pages/Sepet";
+import KokuAtolyesi from "./pages/KokuAtolyesi";
+import Odeme from "./pages/Odeme";
+import SiparisDetay from "./pages/SiparisDetay";
+import SiparisSorgula from "./pages/SiparisSorgula";
 import Giris from "./pages/Giris";
 import Admin from "./pages/Admin";
 import KorumaliRoute from "./components/KorumaliRoute";
-import { useSepet } from "./context/SepetContext";
-import { useAuth } from "./context/AuthContext";
+import { Ust, Alt } from "./components/Duzen";
 
 function App() {
-  const { toplamAdet } = useSepet();
-  const { girisYapildi, cikis } = useAuth();
-
   return (
     <>
-      <header className="ust-bar">
-        <Link to="/" className="logo">
-          Esans
-        </Link>
-
-        <nav className="ust-menu">
-          <Link to="/admin">Yönetim</Link>
-          {girisYapildi && (
-            <button className="link-buton" onClick={() => cikis()}>
-              Çıkış
-            </button>
-          )}
-          <Link to="/sepet" className="sepet-link">
-            Sepet
-            {toplamAdet > 0 && <span className="rozet">{toplamAdet}</span>}
-          </Link>
-        </nav>
-      </header>
+      <Ust />
 
       <main className="icerik">
         <Routes>
-          <Route path="/" element={<ParfumListesi />} />
+          <Route path="/" element={<AnaSayfa />} />
+          <Route path="/parfumler" element={<ParfumListesi />} />
           <Route path="/parfum/:id" element={<ParfumDetay />} />
           <Route path="/sepet" element={<Sepet />} />
+          <Route path="/kendi-kokun" element={<KokuAtolyesi />} />
+          <Route path="/odeme" element={<Odeme />} />
+          <Route path="/siparis/:siparisNo" element={<SiparisDetay />} />
+          <Route path="/siparis-sorgula" element={<SiparisSorgula />} />
           <Route path="/giris" element={<Giris />} />
           <Route
             path="/admin"
@@ -47,9 +36,18 @@ function App() {
               </KorumaliRoute>
             }
           />
-          <Route path="*" element={<p>Sayfa bulunamadı.</p>} />
+          <Route
+            path="*"
+            element={
+              <div className="sayfa-genis bos-durum">
+                <h1>Sayfa bulunamadı</h1>
+              </div>
+            }
+          />
         </Routes>
       </main>
+
+      <Alt />
     </>
   );
 }

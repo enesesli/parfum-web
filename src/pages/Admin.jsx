@@ -6,10 +6,14 @@ import {
   parfumGuncelle,
   parfumleriGetir,
   parfumSil,
+  gorselSil,
+  gorselYukle,
 } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { fiyatYaz } from "../components/ParfumKarti";
+import ParfumGorseli from "../components/ParfumGorseli";
+import { fiyatYaz, indirimOrani, renkKaristir } from "../yardimci";
 import ParfumFormu from "../components/ParfumFormu";
+import AdminSiparisler from "../components/AdminSiparisler";
 
 const SAYFA_BOYUTU = 10;
 
@@ -22,6 +26,8 @@ function Admin() {
   const [yenile, setYenile] = useState(0);
   const [hata, setHata] = useState("");
   const [mesaj, setMesaj] = useState("");
+
+  const [sekme, setSekme] = useState("parfumler");
 
   // null: form kapalı, "yeni": ekleme formu, parfüm nesnesi: düzenleme formu
   const [duzenlenen, setDuzenlenen] = useState(null);
@@ -44,15 +50,24 @@ function Admin() {
     return true;
   }
 
-  async function kaydet(veri) {
+  // gorsel: { dosya: File | null, kaldir: boolean }
+  async function kaydet(veri, gorsel) {
     try {
+      let id;
       if (duzenlenen === "yeni") {
         const yeni = await parfumEkle(veri, token);
+        id = yeni.id;
         setMesaj(`"${yeni.ad}" eklendi.`);
       } else {
         await parfumGuncelle(duzenlenen.id, veri, token);
+        id = duzenlenen.id;
         setMesaj(`"${veri.ad}" güncellendi.`);
       }
+
+      // Ürün bilgileri kaydedildikten sonra görsel ayrı bir istekle gönderilir
+      if (gorsel.dosya) await gorselYukle(id, gorsel.dosya, token);
+      else if (gorsel.kaldir) await gorselSil(id, token);
+
       setDuzenlenen(null);
       setYenile((n) => n + 1);
     } catch (err) {
@@ -85,16 +100,40 @@ function Admin() {
   }
 
   return (
-    <div className="admin">
+    <div className="sayfa-genis admin">
       <div className="admin-ust">
         <div>
           <h1>Yönetim paneli</h1>
           <p className="soluk">Giriş yapan: {kullaniciAdi}</p>
         </div>
-        <button onClick={() => formuAc("yeni")} disabled={duzenlenen === "yeni"}>
-          + Yeni parfüm
-        </button>
+        {sekme === "parfumler" && (
+          <button className="buton" onClick={() => formuAc("yeni")} disabled={duzenlenen === "yeni"}>
+            + Yeni parfüm
+          </button>
+        )}
       </div>
+
+      <div className="admin-sekmeler" role="tablist">
+        {[
+          ["parfumler", "Parfümler"],
+          ["siparisler", "Siparişler"],
+        ].map(([kod, ad]) => (
+          <button
+            key={kod}
+            role="tab"
+            aria-selected={sekme === kod}
+            className={sekme === kod ? "admin-sekme secili" : "admin-sekme"}
+            onClick={() => setSekme(kod)}
+          >
+            {ad}
+          </button>
+        ))}
+      </div>
+
+      {sekme === "siparisler" && <AdminSiparisler token={token} yetkiHatasiMi={yetkiHatasiMi} />}
+
+      {sekme === "parfumler" && (
+        <>
 
       {mesaj && <p className="basari">{mesaj}</p>}
       {hata && <p className="hata">{hata}</p>}
@@ -115,8 +154,8 @@ function Admin() {
             <table className="admin-tablo">
               <thead>
                 <tr>
-                  <th>Ad</th>
-                  <th>Marka</th>
+                  <th>Parfüm</th>
+                  <th>Koku ailesi</th>
                   <th>Cinsiyet</th>
                   <th className="sag">Fiyat</th>
                   <th className="sag">Stok</th>
@@ -127,18 +166,35 @@ function Admin() {
                 {sonuc.veriler.map((p) => (
                   <tr key={p.id} className={duzenlenen?.id === p.id ? "secili" : ""}>
                     <td>
-                      <Link to={`/parfum/${p.id}`}>{p.ad}</Link>
+                      <div className="tablo-urun">
+                        <span
+                          className="tablo-gorsel"
+                          style={{ "--ton": renkKaristir(p.renk, "#ffffff", 0.82) }}
+                        >
+                          <ParfumGorseli parfum={p} />
+                        </span>
+                        <span>
+                          <Link to={`/parfum/${p.id}`}>{p.ad}</Link>
+                          <small>
+                            {p.marka}
+                            {p.yeni && " · Yeni"}
+                          </small>
+                        </span>
+                      </div>
                     </td>
-                    <td>{p.marka}</td>
+                    <td>{p.kokuAilesi}</td>
                     <td>{p.cinsiyet}</td>
-                    <td className="sag">{fiyatYaz(p.fiyat)}</td>
+                    <td className="sag">
+                      {fiyatYaz(p.fiyat)}
+                      {indirimOrani(p) > 0 && <small className="indirimli"> -%{indirimOrani(p)}</small>}
+                    </td>
                     <td className={p.stok === 0 ? "sag tukendi" : "sag"}>{p.stok}</td>
                     <td>
                       <div className="islemler">
-                        <button className="ikincil-buton" onClick={() => formuAc(p)}>
+                        <button className="buton ikincil kucuk" onClick={() => formuAc(p)}>
                           Düzenle
                         </button>
-                        <button className="tehlike-buton" onClick={() => sil(p)}>
+                        <button className="buton tehlike kucuk" onClick={() => sil(p)}>
                           Sil
                         </button>
                       </div>
@@ -151,13 +207,14 @@ function Admin() {
 
           {sonuc.toplamSayfa > 1 && (
             <div className="sayfalama">
-              <button disabled={sayfa <= 1} onClick={() => setSayfa(sayfa - 1)}>
+              <button className="sayfa-dugme" disabled={sayfa <= 1} onClick={() => setSayfa(sayfa - 1)}>
                 ← Önceki
               </button>
               <span>
                 Sayfa {sayfa} / {sonuc.toplamSayfa}
               </span>
               <button
+                className="sayfa-dugme"
                 disabled={sayfa >= sonuc.toplamSayfa}
                 onClick={() => setSayfa(sayfa + 1)}
               >
@@ -165,6 +222,8 @@ function Admin() {
               </button>
             </div>
           )}
+        </>
+      )}
         </>
       )}
     </div>

@@ -70,7 +70,7 @@ function Giris() {
 
       {hata && <p className="hata">{hata}</p>}
 
-      <button type="submit" disabled={gonderiliyor}>
+      <button type="submit" className="buton tam" disabled={gonderiliyor}>
         {gonderiliyor ? "Giriş yapılıyor..." : "Giriş yap"}
       </button>
     </form>

@@ -4,21 +4,40 @@ import { parfumleriGetir, markalariGetir } from "../api";
 import ParfumKarti from "../components/ParfumKarti";
 import FiltrePaneli from "../components/FiltrePaneli";
 
+const ETIKETLER = {
+  ara: (d) => `"${d}"`,
+  markaId: null, // marka adıyla ayrıca yazılıyor
+  cinsiyet: (d) => d,
+  kokuAilesi: (d) => d,
+  konsantrasyon: (d) => d,
+  minFiyat: (d) => `En az ${d} ₺`,
+  maxFiyat: (d) => `En çok ${d} ₺`,
+  yeni: () => "Yeni gelenler",
+  indirimli: () => "İndirimdekiler",
+};
+
+function sayfaBasligi(params, markalar) {
+  if (params.get("yeni") === "true") return "Yeni gelenler";
+  if (params.get("indirimli") === "true") return "İndirimdekiler";
+  if (params.get("kokuAilesi")) return `${params.get("kokuAilesi")} kokular`;
+  const marka = markalar.find((m) => String(m.id) === params.get("markaId"));
+  if (marka) return marka.ad;
+  return "Koleksiyon";
+}
+
 function ParfumListesi() {
   const [params, setParams] = useSearchParams();
   const [sonuc, setSonuc] = useState(null);
   const [markalar, setMarkalar] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState("");
+  const [filtreAcik, setFiltreAcik] = useState(false);
+  const [aramaMetni, setAramaMetni] = useState(params.get("ara") ?? "");
 
-  // Markalar bir kere yüklenir
   useEffect(() => {
-    markalariGetir()
-      .then(setMarkalar)
-      .catch(() => {});
+    markalariGetir().then(setMarkalar).catch(() => {});
   }, []);
 
-  // Adresteki parametreler her değiştiğinde parfümler yeniden yüklenir
   useEffect(() => {
     setYukleniyor(true);
     setHata("");
@@ -32,63 +51,164 @@ function ParfumListesi() {
     const yeni = new URLSearchParams(params);
     if (deger) yeni.set(ad, deger);
     else yeni.delete(ad);
-    if (ad !== "sayfa") yeni.delete("sayfa"); // filtre değişince 1. sayfaya dön
+    if (ad !== "sayfa") yeni.delete("sayfa"); // filtre değişince ilk sayfaya dön
     setParams(yeni);
+  }
+
+  function temizle() {
+    setAramaMetni("");
+    setParams({});
+  }
+
+  function aramaGonder(e) {
+    e.preventDefault();
+    degistir("ara", aramaMetni.trim());
   }
 
   const sayfa = Number(params.get("sayfa") || 1);
 
+  // Seçili filtreleri çip olarak göstermek için
+  const aktifFiltreler = [...params.entries()]
+    .filter(([ad]) => ad in ETIKETLER)
+    .map(([ad, deger]) => {
+      if (ad === "markaId") {
+        const marka = markalar.find((m) => String(m.id) === deger);
+        return { ad, etiket: marka ? marka.ad : "Marka" };
+      }
+      return { ad, etiket: ETIKETLER[ad](deger) };
+    });
+
   return (
-    <div className="liste-duzeni">
-      <FiltrePaneli
-        params={params}
-        markalar={markalar}
-        degistir={degistir}
-        temizle={() => setParams({})}
-      />
+    <div className="sayfa-genis">
+      <header className="sayfa-ust">
+        <span className="ust-baslik">Esans</span>
+        <h1>{sayfaBasligi(params, markalar)}</h1>
+        <p className="soluk">
+          {sonuc ? `${sonuc.toplamKayit} parfüm` : " "}
+          {yukleniyor && sonuc && " · güncelleniyor..."}
+        </p>
+      </header>
 
-      <section>
-        {hata && <p className="hata">{hata}</p>}
+      <div className="liste-duzeni">
+        <FiltrePaneli
+          params={params}
+          markalar={markalar}
+          degistir={degistir}
+          temizle={temizle}
+          acik={filtreAcik}
+          kapat={filtreAcik ? () => setFiltreAcik(false) : null}
+        />
 
-        {sonuc && (
-          <>
-            <p className="sonuc-sayisi">
-              {sonuc.toplamKayit} parfüm bulundu
-              {yukleniyor && " · yükleniyor..."}
-            </p>
+        <section>
+          <div className="arac-cubugu">
+            <form className="arama" onSubmit={aramaGonder} role="search">
+              <input
+                type="search"
+                placeholder="Parfüm, marka veya nota ara (ör. vanilya)"
+                value={aramaMetni}
+                onChange={(e) => setAramaMetni(e.target.value)}
+                aria-label="Ara"
+              />
+              <button type="submit" className="buton">
+                Ara
+              </button>
+            </form>
 
-            {sonuc.veriler.length === 0 ? (
-              <p>Bu filtrelere uyan parfüm yok.</p>
-            ) : (
-              <div className="parfum-izgara">
-                {sonuc.veriler.map((p) => (
-                  <ParfumKarti key={p.id} parfum={p} />
-                ))}
-              </div>
-            )}
+            <button
+              type="button"
+              className="buton ikincil filtre-ac"
+              onClick={() => setFiltreAcik(true)}
+            >
+              Filtreler{aktifFiltreler.length > 0 && ` (${aktifFiltreler.length})`}
+            </button>
 
-            {sonuc.toplamSayfa > 1 && (
-              <div className="sayfalama">
+            <select
+              className="siralama"
+              value={params.get("sirala") ?? ""}
+              onChange={(e) => degistir("sirala", e.target.value)}
+              aria-label="Sırala"
+            >
+              <option value="">Önerilen</option>
+              <option value="yeni">En yeniler</option>
+              <option value="fiyat">Fiyat: düşükten yükseğe</option>
+              <option value="fiyat_azalan">Fiyat: yüksekten düşüğe</option>
+              <option value="ad">İsme göre (A-Z)</option>
+            </select>
+          </div>
+
+          {aktifFiltreler.length > 0 && (
+            <div className="aktif-filtreler">
+              {aktifFiltreler.map((f) => (
                 <button
-                  disabled={sayfa <= 1}
-                  onClick={() => degistir("sayfa", sayfa - 1)}
+                  key={f.ad}
+                  className="aktif-cip"
+                  onClick={() => {
+                    if (f.ad === "ara") setAramaMetni("");
+                    degistir(f.ad, "");
+                  }}
+                  aria-label={`${f.etiket} filtresini kaldır`}
                 >
-                  ← Önceki
+                  {f.etiket} <span aria-hidden="true">×</span>
                 </button>
-                <span>
-                  Sayfa {sayfa} / {sonuc.toplamSayfa}
-                </span>
+              ))}
+              <button className="link-buton" onClick={temizle}>
+                Tümünü temizle
+              </button>
+            </div>
+          )}
+
+          {hata && <p className="hata">{hata}</p>}
+
+          {sonuc && sonuc.veriler.length === 0 && (
+            <div className="bos-durum">
+              <h2>Bu seçimlere uyan parfüm yok</h2>
+              <p className="soluk">Birkaç filtreyi kaldırmayı ya da farklı bir nota aramayı dene.</p>
+              <button className="buton" onClick={temizle}>
+                Filtreleri temizle
+              </button>
+            </div>
+          )}
+
+          {sonuc && sonuc.veriler.length > 0 && (
+            <div className="urun-izgara">
+              {sonuc.veriler.map((p) => (
+                <ParfumKarti key={p.id} parfum={p} />
+              ))}
+            </div>
+          )}
+
+          {sonuc && sonuc.toplamSayfa > 1 && (
+            <nav className="sayfalama" aria-label="Sayfalar">
+              <button
+                className="sayfa-dugme"
+                disabled={sayfa <= 1}
+                onClick={() => degistir("sayfa", sayfa - 1)}
+                aria-label="Önceki sayfa"
+              >
+                ←
+              </button>
+              {Array.from({ length: sonuc.toplamSayfa }, (_, i) => i + 1).map((n) => (
                 <button
-                  disabled={sayfa >= sonuc.toplamSayfa}
-                  onClick={() => degistir("sayfa", sayfa + 1)}
+                  key={n}
+                  className={n === sayfa ? "sayfa-dugme secili" : "sayfa-dugme"}
+                  aria-current={n === sayfa ? "page" : undefined}
+                  onClick={() => degistir("sayfa", n)}
                 >
-                  Sonraki →
+                  {n}
                 </button>
-              </div>
-            )}
-          </>
-        )}
-      </section>
+              ))}
+              <button
+                className="sayfa-dugme"
+                disabled={sayfa >= sonuc.toplamSayfa}
+                onClick={() => degistir("sayfa", sayfa + 1)}
+                aria-label="Sonraki sayfa"
+              >
+                →
+              </button>
+            </nav>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
